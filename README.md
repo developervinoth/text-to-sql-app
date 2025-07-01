@@ -117,3 +117,20 @@ Edit `templates/index.html` to customize the interface, add new features, or cha
 - **Result Limiting**: Automatic LIMIT clauses for large datasets
 - **Error Handling**: Graceful handling of invalid queries
 - **SQL Injection Protection**: Parameterized queries and validation
+
+
+### Fix 2.0
+For 100+ tables, configure the service with:
+
+# In your app.py, replace the TextToSQLService with:
+enhanced_service = EnhancedTextToSQLService(db_manager)
+
+# Process questions with table limits:
+result = enhanced_service.process_question(question, max_tables=15)
+
+# The service will automatically:
+1. Analyze the question to find relevant tables
+2. Score tables based on name/column/description matches
+3. Include only the most relevant tables in the prompt
+4. Generate SQL focused on those tables
+5. Provide metadata about table selection

@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify, render_template
 from config import Config
 from models.database import DatabaseManager
 from services.text_to_sql_service import TextToSQLService
+from services.enhanced_text_to_sql_service import EnhancedTextToSQLService
 import os
 import logging
 
@@ -22,6 +23,12 @@ app.config.from_object(Config)
 # Initialize database manager and service
 try:
     db_manager = DatabaseManager(app.config['DATABASE_PATH'])
+        # In your app.py, replace the TextToSQLService with:
+    enhanced_service = EnhancedTextToSQLService(db_manager)
+
+    # Process questions with table limits:
+
+
     text_to_sql_service = TextToSQLService(db_manager)
     logger.info("Application initialized successfully")
 except Exception as e:
@@ -61,8 +68,8 @@ def process_query():
         logger.info(f"Received question: {question}")
         
         # Process the question
-        result = text_to_sql_service.process_question(question)
-        
+        # result = text_to_sql_service.process_question(question)
+        result = enhanced_service.process_question(question, max_tables=15)
         # Log the result for debugging
         if result['success']:
             logger.info(f"Query successful: {result['query']}, returned {result['result']['row_count']} rows")

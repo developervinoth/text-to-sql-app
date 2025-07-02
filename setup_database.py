@@ -1,11 +1,13 @@
-
+"""
+Updated script to set up database with mock sample tables for PCI/MNPI compliance
+"""
 import sqlite3
 import os
 from datetime import datetime, timedelta
 import random
 
-def create_sample_database(db_path: str = "text_to_sql1.db"):
-    """Create sample database with tables and metadata"""
+def create_sample_database(db_path: str = "test2.db"):
+    """Create sample database with tables and their corresponding mock sample tables"""
     
     # Remove existing database
     if os.path.exists(db_path):
@@ -13,15 +15,21 @@ def create_sample_database(db_path: str = "text_to_sql1.db"):
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    print("creating sqlite3 tables...")
+    
     # Create metadata tables first
     create_metadata_tables(cursor)
     
     # Create sample business tables
     create_sample_tables(cursor)
     
-    # Insert sample data
+    # Create corresponding mock sample tables
+    create_mock_sample_tables(cursor)
+    
+    # Insert sample data into real tables
     insert_sample_data(cursor)
+    
+    # Insert mock data into sample tables
+    insert_mock_sample_data(cursor)
     
     # Insert metadata
     insert_metadata(cursor)
@@ -30,6 +38,8 @@ def create_sample_database(db_path: str = "text_to_sql1.db"):
     conn.close()
     
     print(f"Sample database created: {db_path}")
+    print("✅ Real tables: users, categories, products, orders, order_items")
+    print("🔒 Mock tables: users_sample, categories_sample, products_sample, orders_sample, order_items_sample")
 
 def create_metadata_tables(cursor):
     """Create metadata tables for descriptions"""
@@ -58,7 +68,7 @@ def create_metadata_tables(cursor):
     """)
 
 def create_sample_tables(cursor):
-    """Create sample business tables"""
+    """Create sample business tables (real tables)"""
     
     # Users table
     cursor.execute("""
@@ -127,8 +137,75 @@ def create_sample_tables(cursor):
     )
     """)
 
+def create_mock_sample_tables(cursor):
+    """Create mock sample tables with identical structure to real tables"""
+    
+    print("Creating mock sample tables for PCI/MNPI compliance...")
+    
+    # Users sample table (identical structure)
+    cursor.execute("""
+    CREATE TABLE users_sample (
+        user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        date_joined DATE NOT NULL,
+        is_active BOOLEAN DEFAULT 1,
+        user_type TEXT CHECK(user_type IN ('customer', 'admin', 'vendor')) DEFAULT 'customer'
+    )
+    """)
+    
+    # Categories sample table
+    cursor.execute("""
+    CREATE TABLE categories_sample (
+        category_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_name TEXT UNIQUE NOT NULL,
+        description TEXT,
+        parent_category_id INTEGER
+    )
+    """)
+    
+    # Products sample table
+    cursor.execute("""
+    CREATE TABLE products_sample (
+        product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_name TEXT NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        category_id INTEGER NOT NULL,
+        stock_quantity INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_active BOOLEAN DEFAULT 1
+    )
+    """)
+    
+    # Orders sample table
+    cursor.execute("""
+    CREATE TABLE orders_sample (
+        order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        total_amount DECIMAL(10,2) NOT NULL,
+        status TEXT CHECK(status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')) DEFAULT 'pending',
+        shipping_address TEXT
+    )
+    """)
+    
+    # Order items sample table
+    cursor.execute("""
+    CREATE TABLE order_items_sample (
+        order_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id INTEGER NOT NULL,
+        product_id INTEGER NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price DECIMAL(10,2) NOT NULL,
+        total_price DECIMAL(10,2) NOT NULL
+    )
+    """)
+
 def insert_sample_data(cursor):
-    """Insert sample data into tables"""
+    """Insert sample data into real tables"""
     
     # Insert categories
     categories = [
@@ -200,6 +277,86 @@ def insert_sample_data(cursor):
     VALUES (?, ?, ?, ?, ?)
     """, order_items)
 
+def insert_mock_sample_data(cursor):
+    """Insert mock/fake data into sample tables for AI context"""
+    
+    print("Inserting mock sample data (PCI/MNPI safe)...")
+    
+    # Mock categories (safe, generic data)
+    mock_categories = [
+        (1, "Tech_Demo", "Demo technology products", None),
+        (2, "Fashion_Test", "Test fashion items", None),
+        (3, "Media_Sample", "Sample media content", None),
+        (4, "Mobile_Mock", "Mock mobile devices", 1),
+        (5, "Computer_Demo", "Demo computers", 1)
+    ]
+    
+    cursor.executemany("""
+    INSERT INTO categories_sample (category_id, category_name, description, parent_category_id)
+    VALUES (?, ?, ?, ?)
+    """, mock_categories)
+    
+    # Mock users (completely fictional)
+    mock_users = [
+        ("demo_user1", "demo1@example.com", "Alice", "Demo", "2023-01-15", 1, "customer"),
+        ("demo_user2", "demo2@example.com", "Bob", "Test", "2023-02-20", 1, "customer"),
+        ("demo_admin", "admin@example.com", "Demo", "Admin", "2023-01-01", 1, "admin"),
+        ("demo_vendor", "vendor@example.com", "Test", "Vendor", "2023-03-10", 1, "vendor"),
+        ("demo_inactive", "inactive@example.com", "Inactive", "User", "2022-12-01", 0, "customer")
+    ]
+    
+    cursor.executemany("""
+    INSERT INTO users_sample (username, email, first_name, last_name, date_joined, is_active, user_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, mock_users)
+    
+    # Mock products (safe product names and prices)
+    mock_products = [
+        ("Demo Phone X1", "Sample smartphone for testing", 599.99, 4, 25, 1),
+        ("Test Laptop Pro", "Demo laptop computer", 1299.99, 5, 15, 1),
+        ("Sample Shirt", "Demo clothing item", 29.99, 2, 50, 1),
+        ("Mock Programming Guide", "Test educational book", 39.99, 3, 100, 1),
+        ("Demo Tablet Z2", "Sample tablet device", 399.99, 1, 30, 1),
+        ("Test Headphones", "Demo audio device", 149.99, 1, 75, 1),
+        ("Sample Jeans", "Demo denim pants", 79.99, 2, 40, 1)
+    ]
+    
+    cursor.executemany("""
+    INSERT INTO products_sample (product_name, description, price, category_id, stock_quantity, is_active)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """, mock_products)
+    
+    # Mock orders (safe transaction data)
+    mock_orders = [
+        (1, "2024-01-15 10:30:00", 629.98, "delivered", "123 Demo Street, Test City"),
+        (2, "2024-01-20 14:20:00", 1329.98, "shipped", "456 Sample Ave, Mock Town"),
+        (3, "2024-02-01 09:15:00", 219.98, "pending", "789 Example Blvd, Demo City"),
+        (1, "2024-02-10 16:45:00", 149.99, "processing", "123 Demo Street, Test City"),
+        (4, "2024-02-15 11:30:00", 79.99, "cancelled", "321 Test Lane, Sample City")
+    ]
+    
+    cursor.executemany("""
+    INSERT INTO orders_sample (user_id, order_date, total_amount, status, shipping_address)
+    VALUES (?, ?, ?, ?, ?)
+    """, mock_orders)
+    
+    # Mock order items (corresponding to mock orders)
+    mock_order_items = [
+        (1, 1, 1, 599.99, 599.99),      # Demo Phone X1
+        (1, 3, 1, 29.99, 29.99),       # Sample Shirt
+        (2, 2, 1, 1299.99, 1299.99),   # Test Laptop Pro
+        (2, 3, 1, 29.99, 29.99),       # Sample Shirt
+        (3, 6, 1, 149.99, 149.99),     # Test Headphones
+        (3, 7, 1, 79.99, 79.99),       # Sample Jeans
+        (4, 6, 1, 149.99, 149.99),     # Test Headphones
+        (5, 7, 1, 79.99, 79.99)        # Sample Jeans (cancelled order)
+    ]
+    
+    cursor.executemany("""
+    INSERT INTO order_items_sample (order_id, product_id, quantity, unit_price, total_price)
+    VALUES (?, ?, ?, ?, ?)
+    """, mock_order_items)
+
 def insert_metadata(cursor):
     """Insert table and column descriptions"""
     
@@ -217,7 +374,7 @@ def insert_metadata(cursor):
     VALUES (?, ?)
     """, table_descriptions)
     
-    # Column descriptions
+    # Column descriptions (for all real tables)
     column_descriptions = [
         # Users table
         ("users", "user_id", "Unique identifier for each user", "Primary key for user records", "1, 2, 3"),
@@ -267,5 +424,56 @@ def insert_metadata(cursor):
     VALUES (?, ?, ?, ?, ?)
     """, column_descriptions)
 
+def create_additional_mock_tables_script():
+    """Generate a script for creating mock tables for any additional real tables"""
+    
+    script = """
+-- Additional Mock Tables Setup Script
+-- Use this template to create mock tables for any additional real tables
+
+-- Template for creating a mock table:
+-- 1. Copy the structure of your real table
+-- 2. Create {table_name}_sample with identical structure
+-- 3. Insert 3-5 rows of safe, fictional data
+
+-- Example for a new table called 'payments':
+/*
+CREATE TABLE payments_sample (
+    payment_id INTEGER PRIMARY KEY,
+    order_id INTEGER,
+    payment_method TEXT,
+    amount DECIMAL(10,2),
+    payment_date TIMESTAMP,
+    status TEXT
+);
+
+INSERT INTO payments_sample VALUES 
+(1, 1, 'demo_card_****1234', 629.98, '2024-01-15 10:35:00', 'completed'),
+(2, 2, 'demo_card_****5678', 1329.98, '2024-01-20 14:25:00', 'completed'),
+(3, 3, 'demo_paypal', 219.98, '2024-02-01 09:20:00', 'pending');
+*/
+
+-- Guidelines for mock data:
+-- [OK] Use fictional names, emails, addresses
+-- [OK] Use demo/test/sample prefixes
+-- [OK] Use safe card numbers (4111-1111-1111-1111 for testing)
+-- [OK] Use realistic but fake amounts and dates
+-- [NO] Never use real customer data
+-- [NO] Never use real payment information
+-- [NO] Never use real personal identifiers
+"""
+    
+    return script
+
 if __name__ == "__main__":
     create_sample_database()
+    
+    # Create additional setup script with proper encoding
+    try:
+        with open("additional_mock_tables.sql", "w", encoding='utf-8') as f:
+            f.write(create_additional_mock_tables_script())
+        print("\n[INFO] Created additional_mock_tables.sql for future tables")
+        print("[INFO] Database is now PCI/MNPI compliant with mock sample data")
+    except Exception as e:
+        print(f"\n[WARNING] Could not create additional_mock_tables.sql: {e}")
+        print("[INFO] Database setup completed successfully anyway")

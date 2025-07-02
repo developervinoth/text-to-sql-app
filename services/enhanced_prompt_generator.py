@@ -62,25 +62,25 @@ class EnhancedPromptGenerator:
         
         prompt = f"""You are an expert SQL query generator. Convert the natural language question into a valid SQLite query.
 
-{schema_info}
+        {schema_info}
 
-Important Notes:
-- Tables are independent (no foreign key relationships)
-- Focus on the tables most relevant to the question
-- If you need to join data from multiple tables, you cannot use foreign keys
-- Use WHERE clauses to filter data appropriately
-- Consider using UNION if combining data from similar tables
+        Important Notes:
+        - Tables are independent (no foreign key relationships)
+        - Focus on the tables most relevant to the question
+        - If you need to join data from multiple tables, you cannot use foreign keys
+        - Use WHERE clauses to filter data appropriately
+        - Consider using UNION if combining data from similar tables
 
-Rules:
-1. Generate ONLY the SQL query, no explanations
-2. Use proper SQLite syntax
-3. Handle the fact that tables are not related
-4. Include LIMIT clause for potentially large results (max 100 rows)
-5. Use table and column descriptions to understand business context
-6. Be case-insensitive in your matching
+        Rules:
+        1. Generate ONLY the SQL query, no explanations
+        2. Use proper SQLite syntax
+        3. Handle the fact that tables are not related
+        4. Include LIMIT clause for potentially large results (max 100 rows)
+        5. Use table and column descriptions to understand business context
+        6. Be case-insensitive in your matching
 
-Question: {user_question}
+        Question: {user_question}
 
-SQL Query:"""
+        SQL Query:"""
         
         return prompt
